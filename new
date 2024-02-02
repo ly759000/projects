@@ -1,0 +1,154 @@
+
+
+
+L记录开始位置
+R记录结束位置
+
+\011!22
+
+
+
+
+
+\011!22@23    
+!22@23
+11!22@23
+1!22@23
+22@23
+2@23
+23
+3
+@23
+
+三个条件
+1、000101100 height数组,2个字符串时，找1的位置p
+3个字符串找相邻两个的1的位置p
+
+2、找到p位置所在的字符串的排序位置，判断charAt字符和前一个字符是否均为数字或字母（整体判断），后一个字符也要判断
+
+3、031245786 sa数组，
+
+起始结束位置区间，根据1找到3的下标，然后判断是否区间内
+区间1 【1,2】
+区间2 【4,5】
+区间3 【7,8】
+
+
+
+待优化：count计数需要循环65536的地方
+
+
+
+
+
+
+package com.huawei.it.cbg.ccp.tkb.weknow;
+
+public class StartApplication {
+    static void tsort(char[] rk, char[] sa, char[] tp, int[] count, int m) {
+        for (int i = 1; i <= m && i < count.length; i++) {
+            count[i] = 0;
+        }
+        for (int i = 1; i < rk.length; i++) {
+            count[rk[i]]++;
+        }
+        for (int i = 2; i <= m && i < count.length; i++) {
+            count[i] += count[i - 1];
+        }
+        for (int i = rk.length - 1; i > 0; i--) {
+            sa[count[rk[tp[i]]]--] = tp[i];
+        }
+    }
+    
+    static boolean cmp(char[] arr, int l, int r, int k) {
+        if (l + k > arr.length - 1 || r + k > arr.length - 1) {
+            return false;
+        }
+        return arr[l] == arr[r] && arr[l + k] == arr[r + k];
+    }
+    
+    static void suffix_sort(char[] s) {
+        int m = 65536;
+        int[] count = new int[m];
+        char[] tp = new char[s.length];
+        char[] rk = new char[s.length];
+        char[] sa = new char[s.length];
+        int[] height = new int[s.length];
+        for (int i = 1; i < s.length; i++) {
+            tp[i] = (char) i;
+        }
+        for (int i = 1; i < s.length; i++) {
+            rk[i] = s[i];
+        }
+        tsort(rk, sa, tp, count, m);
+        for (int k = 1, p = 0; p < s.length - 1; k <<= 1, m = p) {
+            p = k;
+            for (int i = 1; i <= k; i++) {
+                tp[i] = (char) (s.length - 1 - k + i);
+            }
+            for (int i = 1; i < s.length; i++) {
+                if (sa[i] > k) {
+                    tp[++p] = (char) (sa[i] - k);
+                }
+            }
+            tsort(rk, sa, tp, count, m);
+            swap(rk, tp);
+            rk[sa[1]] = 1;
+            p = 1;
+            for (int i = 2; i < s.length; i++) {
+                rk[sa[i]] = (char) (cmp(tp, sa[i - 1], sa[i], k) ? p : ++p);
+            }
+        }
+        int k = 0;
+        int j;
+        for (int i = 1; i < s.length; i++) {
+            if (k > 0) {
+                k--;
+            }
+            if (rk[i] - 1 > 0) {
+                for (j = sa[rk[i] - 1]; j + k < s.length && i + k < s.length && s[j + k] == s[i + k]; k++) {
+                
+                }
+            }
+            height[rk[i]] = k;
+        }
+//        for (int i = 0; i < s.length; i++) {
+//            System.out.print(height[i]);
+//        }
+//        System.out.println();
+    }
+    
+    public static void swap(char[] rk, char[] tp) {
+        for (int i = 0; i < rk.length; i++) {
+            char c = rk[i];
+            rk[i] = tp[i];
+            tp[i] = c;
+        }
+    }
+    
+    public static void main(String[] args) {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        long start =System.currentTimeMillis();
+        for(int i=0;i<50;i++) {
+            String str1 = '\u0000' + "11saaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            String str2 = '!' + "11saaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaa11saaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            String str3 = '@' + "11saaaaaaaaa11saaa11saaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa11saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            String str = str1 + str2 + str3;
+            suffix_sort(str.toCharArray());
+        }
+        System.out.println(System.currentTimeMillis()-start);
+        
+    }
+}
+
+
+
+
+
+
+
+
