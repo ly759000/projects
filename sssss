@@ -1,0 +1,230 @@
+
+
+
+
+
+
+
+
+
+
+
+<html>
+	<input type="text" id="a1"><br>
+	<input type="text" id="a2"><br>
+	<input type="text" id="a3"><br>
+	<input type="button" id="bt" onclick="main()"/>
+	<script>
+		function main(){
+			var str1 = document.getElementById("a1").value;
+			var str2 = document.getElementById("a2").value;
+			var str3 = document.getElementById("a3").value;
+			console.log(inputStr(str1,str2,str3));
+		}
+		
+		function inputStr(str1,str2,str3){
+			var s=[];
+			var pos = [];
+			var flag = 0;
+			if(str1){
+			 s.push('\x00');
+			 for(var i=0;i<str1.length;i++){
+				s.push(str1.charAt(i));
+			 }
+			 pos[flag] = [];
+			 pos[flag][0]=1;
+			 pos[flag][1]=pos[flag][0]+str1.length-1;
+			 flag++;
+			}
+			if(str2){
+				s.push('\x01');
+				for(var i=0;i<str2.length;i++){
+					s.push(str2.charAt(i));
+				}
+			 pos[flag] = [];
+			 pos[flag][0]=(flag==0?1:pos[flag-1][1]+2);
+			 pos[flag][1]=pos[flag][0]+str2.length-1;
+			 flag++;
+			}
+			if(str3){
+				s.push('\x02');
+				for(var i=0;i<str3.length;i++){
+					s.push(str3.charAt(i));
+				}
+			 pos[flag] = [];
+			 pos[flag][0]=(flag==0?1:pos[flag-1][1]+2);
+			 pos[flag][1]=pos[flag][0]+str3.length-1;
+			}
+			if(pos.length<2){
+				return '';
+			}
+			return suffix_sort(s,pos);
+		}
+		
+		function suffix_sort(s,pos){
+			var tp = [];
+			var rk = [];
+			var sa = [];
+			var height = [];
+			tp[0]='\x00';
+			rk[0]='\x00';
+			sa[0]='\x00';
+			height[0]=0;
+			var m = s.length;
+			for (var i = 1; i < s.length; i++) {
+				sa[i]='\x00';
+				height[i]=0;
+				tp[i] = String.fromCharCode(i);
+				rk[i] = s[i];
+				if (s[i].charCodeAt() > m) {
+					m = s[i].charCodeAt();
+				}
+			}
+			m++;
+			var count = [];
+			count[0]=0;
+			count.length=m;
+			tsort(rk, sa, tp, count, m);
+			for (var k = 1, p = 0; p < s.length - 1; k <<= 1, m = p) {
+				p = k;
+				for (var i = 1; i <= k; i++) {
+					tp[i] = String.fromCharCode(s.length - 1 - k + i);
+				}
+				for (var i = 1; i < s.length; i++) {
+					if (sa[i].charCodeAt() > k) {
+						tp[++p] =  String.fromCharCode(sa[i].charCodeAt() - k);
+					}
+				}
+				tsort(rk, sa, tp, count, m);
+				swap(rk, tp);
+				rk[sa[1].charCodeAt()] = '\x01';
+				p = 1;
+				for (var i = 2; i < s.length; i++) {
+					rk[sa[i].charCodeAt()] = String.fromCharCode((cmp(tp, sa[i - 1], sa[i], k) ? p : ++p));
+				}
+			}
+			var k = 0;
+			var j;
+			for (var i = 1; i < s.length; i++) {
+				if (k > 0) {
+					k--;
+				}
+				var tmp = rk[i].charCodeAt() - 1 ;
+				if (tmp>0) {
+					j = sa[tmp].charCodeAt();
+					while(j + k < s.length && i + k < s.length && s[j + k] == s[i + k]){
+						k++;
+					}
+				}
+				height[rk[i].charCodeAt()] = k;
+			}
+			return getCommonStr(s,height,pos,sa,rk,count);
+		}
+		
+		function getCommonStr(s,height,pos,sa,rk,count){
+			var maxIndex = 0;
+			var sum = [];
+			for(var i = 0; i < pos.length; i++){
+				sum[i]=[];
+				for(var j = 0; j <count.length; j++){
+					sum[i][j]=0;
+				}
+				for(var j = pos[i][0]; j <= pos[i][1]; j++){
+					sum[i][rk[j].charCodeAt()]++;
+				}
+				for(var j = 1; j < s.length; j++){
+					sum[i][j] += sum[i][j - 1];
+				}
+			}
+			var l = 1;
+			var r = count.length;
+			var mid = 0;
+			var ans = 0;
+			var flag;
+			for(var i = 0; i < pos.length; i++) {
+				r = Math.min(r, pos[i][1] - pos[i][0] + 1);
+			}
+			var q = [];
+			q[0] = 0;
+			while(l <= r){
+				mid = l + r >> 1;
+				qcnt = 0;
+				for(var i = 1; i < s.length; i++){
+					if(height[i] < mid) q[++qcnt] = i;
+				}
+				for(var i = 2; i <= qcnt; i++){
+					flag = true;
+					for(var j = 0; j < pos.length; j++) flag &= sum[j][q[i] - 1] - sum[j][q[i - 1] - 1] > 0;
+					if(flag) break;
+				}
+				if(flag){
+					ans = mid;
+					l = mid + 1;
+				}
+				else r = mid - 1;
+			}
+			
+			if(ans==0){
+				return '';
+			}
+			
+			var index = getMaxHeightIndex(height,ans);
+			var commonStr = [];
+			var strPos = sa[index].charCodeAt();
+			for(var i = 0;i<height[index];i++){
+				commonStr[i]=s[strPos+i];
+			}
+			return commonStr.join('');
+		}
+		
+		function getMaxHeightIndex(height,ans){
+			for(var i=0;i<height.length;i++){
+				if(ans==height[i]){
+					
+				
+				
+				
+				
+					return i;
+				}
+			}
+			return 0;
+		}
+		
+		function tsort(rk, sa, tp, count, m) {
+			for (var i = 1; i <= m && i < count.length; i++) {
+				count[i] = 0;
+			}
+			for (var i = 1; i < rk.length && i < count.length; i++) {
+				count[rk[i].charCodeAt()]++;
+			}
+			for (var i = 2; i <= m && i < count.length; i++) {
+				count[i] += count[i - 1];
+			}
+			for (var i = rk.length - 1; i > 0; i--) {
+				var a = tp[i];
+				var b = rk[a.charCodeAt()];
+				sa[count[b.charCodeAt()]--] = tp[i];
+			}
+		}
+		
+		function swap( rk,  tp) {
+			for (var i = 0; i < rk.length; i++) {
+				var c = rk[i];
+				rk[i] = tp[i];
+				tp[i] = c;
+			}
+		}
+		
+		function cmp( arr,  l,  r,  k) {
+			var varLValue = l.charCodeAt();
+			var varRValue = r.charCodeAt();
+			if (varLValue + k > arr.length - 1 || varRValue + k > arr.length - 1) {
+				return false;
+			}
+			return arr[varLValue] == arr[varRValue] && arr[varLValue + k] == arr[varRValue + k];
+		}
+	</script>
+</html>
+
+
