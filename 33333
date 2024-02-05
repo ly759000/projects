@@ -1,0 +1,58 @@
+<script>
+function max_match()
+{
+var arr = [], i = 0, n = 0, max_len = 0, t, is_match = false;
+match_hash =
+{
+}
+;
+while(i < arguments.length)
+{
+arr[i] = arguments[i];
+i ++ ;
+}
+arr.sort(function(a, b)
+{
+return a.length > b.length ? 1 : - 1;
+}
+);
+for(var i = 0; i < arr[0].length && max_len <= arr[0].length - i - 1; i ++ )
+   {
+      for(var j = 0; j < arr[0].length - i && max_len <= arr[0].length - i - j - 1; j ++ )
+      {
+         t = arr[0].slice(i, arr[0].length - j);
+for(var k = 1; k < arr.length; k ++ )
+{
+is_match = new RegExp(t, "g").test(arr[k]);
+if( ! is_match)
+break;
+// 累加循环次数
+            n ++ ;
+}
+if(is_match)
+{
+match_hash[t.length] = match_hash[t.length] ? match_hash[t.length] + "," + t : t;
+if(t.length > max_len)max_len = t.length;
+}
+// 累加循环次数
+n ++ ;
+}
+// 累加循环次数
+      n ++ ;
+}
+   /* 返回结果 */
+if(max_len > 0)
+{
+return "参与匹配的子串：<br>"
+// 为最大公共子串着色
++ arr.join("<br>").replace(new RegExp("(" + match_hash[max_len].replace(/,/, "|") + ")", "ig"), "<font color=#FF0000><b>$1<\/b><\/font>") + "<br><br>"
++ "最大子串：" + match_hash[max_len] + "<br>"
++ "循环次数：" + n;
+}
+else
+{
+return "未找到！";
+}
+}
+document.write(max_match("aaabb1aaa","bbaaa"));
+</script>
