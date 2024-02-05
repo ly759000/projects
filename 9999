@@ -1,0 +1,252 @@
+
+
+
+
+
+
+
+三个遗留问题
+1、正则转义和字母判断
+2、result递归要注意上下文位置
+3、两个，三个字符串多自测
+a1122
+a112233
+a2233
+
+1111
+1221
+1122
+
+\*
+..
+**
+
+
+
+
+
+
+<html>
+	<input type="text" id="a1"><br>
+	<input type="text" id="a2"><br>
+	<input type="text" id="a3"><br>
+	<input type="button" id="bt" onclick="main()"/>
+	<script>
+		function main(){
+			var str1 = document.getElementById("a1").value;
+			var str2 = document.getElementById("a2").value;
+			var str3 = document.getElementById("a3").value;
+			document.write(inputStr(str1,str2,str3));
+		}
+		
+		function inputStr(str1,str2,str3){
+			var strs=[str1,str2,str3];
+			var pos=[];
+			var s=[];
+			for(var i =0;i<strs.length;i++){
+				if(strs[i]){
+					var lastIndex = pos[pos.length-1]
+					if(lastIndex){
+						pos.push([lastIndex[1]+2,lastIndex[1]+1+strs[i].length]);
+					}else{
+						pos.push([1,strs[i].length]);
+					}
+					s.push(String.fromCharCode(i));
+					for(var j =0;j<strs[i].length;j++){
+						s.push(strs[i].charAt(j));
+					}
+				}
+			}
+			if(s.length<4){
+				return [];
+			}
+			return suffix_sort(str1,str2,str3,s,pos);
+		}
+		
+		function suffix_sort(str1,str2,str3,s,pos){
+			var tp = ['\x00'];
+			var rk = ['\x00'];
+			var sa = ['\x00'];
+			var height = [0];
+			var m = s.length;
+			for (var i = 1; i < s.length; i++) {
+				sa[i]='\x00';
+				height[i]=0;
+				tp[i] = String.fromCharCode(i);
+				rk[i] = s[i];
+				if (s[i].charCodeAt() > m) {
+					m = s[i].charCodeAt();
+				}
+			}
+			m++;
+			var count = [0];
+			count.length=m;
+			tsort(rk, sa, tp, count, m);
+			for (var k = 1, p = 0; p < s.length - 1; k <<= 1, m = p) {
+				p = k;
+				for (var i = 1; i <= k; i++) {
+					tp[i] = String.fromCharCode(s.length - 1 - k + i);
+				}
+				for (var i = 1; i < s.length; i++) {
+					if (sa[i].charCodeAt() > k) {
+						tp[++p] =  String.fromCharCode(sa[i].charCodeAt() - k);
+					}
+				}
+				tsort(rk, sa, tp, count, m);
+				swap(rk, tp);
+				rk[sa[1].charCodeAt()] = '\x01';
+				p = 1;
+				for (var i = 2; i < s.length; i++) {
+					rk[sa[i].charCodeAt()] = String.fromCharCode((cmp(tp, sa[i - 1], sa[i], k) ? p : ++p));
+				}
+			}
+			var k = 0;
+			var j;
+			for (var i = 1; i < s.length; i++) {
+				if (k > 0) {
+					k--;
+				}
+				var tmp = rk[i].charCodeAt() - 1 ;
+				if (tmp>0) {
+					j = sa[tmp].charCodeAt();
+					while(j + k < s.length && i + k < s.length && s[j + k] == s[i + k]){
+						k++;
+					}
+				}
+				height[rk[i].charCodeAt()] = k;
+			}
+			console.log(height);
+			var searchStr = getSearchStrs(s,sa,height,pos);
+			var result = [];
+			for(var i=0;i<3;i++){
+				result[i] = [];
+			}
+			doSearchCommonStr(str1,str2,str3,searchStr,result);
+			return getResults(str1,str2,str3,result);
+		}
+		
+		function doSearchCommonStr(str1,str2,str3,searchStr,result){
+			if(!str1||!str2||!str3){
+				return;
+			}
+			var matchResult1;
+			var matchResult2;
+			var matchResult3;
+			for(var i=0;i<searchStr.length;i++){
+				var reg = new RegExp(searchStr[i]);
+				matchResult1 = str1.match(reg);
+				if(!matchResult1){
+					continue;
+				}
+				matchResult2 = str2.match(reg);
+				if(!matchResult2){
+					continue;
+				}
+				matchResult3 = str3.match(reg);
+				if(!matchResult3){
+					continue;
+				}
+				result[0].push(matchResult1.index);
+				result[0].push(matchResult1.index+matchResult1[0].length-1);
+				result[1].push(matchResult2.index);
+				result[1].push(matchResult2.index+matchResult2[0].length-1);
+				result[2].push(matchResult3.index);
+				result[2].push(matchResult3.index+matchResult3[0].length-1);
+				break;
+			}
+			if(matchResult1&&matchResult2&&matchResult3){
+				doSearchCommonStr(str1.slice(0,result[0][0]),str2.slice(0,result[1][0]),str3.slice(0,result[2][0]),searchStr,result);
+				doSearchCommonStr(str1.slice(result[0][1]+1,str1.lengthj),str2.slice(result[1][1]+1,str2.lengthj),str3.slice(result[2][1]+1,str3.lengthj),searchStr,result);
+			}
+		}
+		
+		function getSearchStrs(s,sa,height,pos){
+			var set = new Set();
+			for(var i=1;i<height.length;i++){
+				if(height[i]>0){
+					var index = [sa[i-1].charCodeAt(),sa[i].charCodeAt()];
+					index.sort(function(a,b){return a-b;})
+					var flag = 0;
+					for(var j=0;j<pos.length;j++){
+						if(pos[j][0]<=index[0]&&pos[j][1]>=index[0]||pos[j][0]<=index[1]&&pos[j][1]>=index[1]){
+							flag ++;
+						}
+					}
+					if(flag==2){
+						set.add(s.slice(index[0],index[0]+height[i]).join(''));
+					}
+				}
+			}
+			var searchStrs = Array.from(set);
+			searchStrs.sort(function(a,b){return b.length-a.length;});
+			//这里有正则判断,以及转义处理
+			
+			return searchStrs;
+		}
+		
+		function getResults(str1,str2,str3,result){
+			var strs = [str1,str2,str3];
+			var resultStr=[];	
+			for(var m = 0;m<3;m++){
+				var j =0;
+				var s=[];
+				for(var i=0;i<strs[m].length;i++){
+					if(j<result[m].length&&i==result[m][j]){
+						if(j%2==0){
+							s.push('<font color=#FF0000>');
+							s.push(strs[m].charAt(i));
+							if(i == result[m][j+1]){
+								s.push('</font>');
+								j++;
+							}
+						}else{
+							s.push(strs[m].charAt(i));
+							s.push('</font>');
+						}
+						j++;
+					}else{	
+						s.push(strs[m].charAt(i));
+					}
+				}
+				resultStr[m] = s.join('');
+			}
+			return resultStr;
+		}
+		
+		function tsort(rk, sa, tp, count, m) {
+			for (var i = 1; i <= m && i < count.length; i++) {
+				count[i] = 0;
+			}
+			for (var i = 1; i < rk.length && i < count.length; i++) {
+				count[rk[i].charCodeAt()]++;
+			}
+			for (var i = 2; i <= m && i < count.length; i++) {
+				count[i] += count[i - 1];
+			}
+			for (var i = rk.length - 1; i > 0; i--) {
+				var a = tp[i];
+				var b = rk[a.charCodeAt()];
+				sa[count[b.charCodeAt()]--] = tp[i];
+			}
+		}
+		
+		function swap( rk,  tp) {
+			for (var i = 0; i < rk.length; i++) {
+				var c = rk[i];
+				rk[i] = tp[i];
+				tp[i] = c;
+			}
+		}
+		
+		function cmp( arr,  l,  r,  k) {
+			var varLValue = l.charCodeAt();
+			var varRValue = r.charCodeAt();
+			if (varLValue + k > arr.length - 1 || varRValue + k > arr.length - 1) {
+				return false;
+			}
+			return arr[varLValue] == arr[varRValue] && arr[varLValue + k] == arr[varRValue + k];
+		}
+	</script>
+</html>
+
+
